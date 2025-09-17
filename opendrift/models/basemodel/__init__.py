@@ -1699,6 +1699,40 @@ class OpenDriftSimulation(PhysicsMethods, Timeable, Configurable):
                          (np.sum(indices)))
             #if self.num_elements_active() == 0:
             #    raise ValueError('No more active elements.')  # End simulation
+    
+    def premature_deactivation(self):
+
+        indices = []        
+        if self.get_config('general:premature_deactivation') is None:
+            logger.info('Deactivation function deactivated')
+            return
+
+        # Hard limits for temperature or salinity (basic usage)
+        elif self.get_config('general:premature_deactivation') is 'temperature_minmax':
+            indices = [el < self.get_config('general:deactivation_min') or el > self.get_config('general:deactivation_max') for el in self.environment.sea_water_temperature]
+
+        elif self.get_config('general:premature_deactivation') is 'salinity_minmax':
+            indices = [el < self.get_config('general:deactivation_min') or el > self.get_config('general:deactivation_max') for el in self.environment.sea_water_salinity]
+        
+        # Uses the new health attribute of pelagic egg.
+        # Eg. 1 particle is an egg population, how much % of population survives along trajectory
+        # Eg. 2 Likelyhood of egg surviving trajectory
+        elif self.get_config('general:premature_deactivation') is 'exposure':
+            # Create some exposure "health drain" functions
+            if self.get_config('general:deactivation_exposure') is 'simple_minmax_exposure':
+                health_indices = [el < self.get_config('general:deactivation_min') or 
+                           el > self.get_config('general:deactivation_max') 
+                           for el in self.environment.sea_water_temperature]
+
+                self.elements.health[health_indices == np.True_] -= 50
+            
+            if self.get_config('general:deactivation_exposure') is 'randomly_consumed':
+                self.elements.health -= np.random.rand(len(self.elements.health)) * 10
+
+            indices = [el <= 0 for el in self.elements.health]
+
+        if len(indices) > 0:
+            self.deactivate_elements(indices, 'Deactivated through general:premature_deactivation config.')
 
     @require_mode(mode=Mode.Run, post_next_mode=True)
     def run(self,
@@ -2129,6 +2163,8 @@ class OpenDriftSimulation(PhysicsMethods, Timeable, Configurable):
                 self.state_to_buffer()  # Append status to history array
                 
                 self.increase_age_and_retire()
+
+                self.premature_deactivation()
 
                 self.remove_deactivated_elements()
 
