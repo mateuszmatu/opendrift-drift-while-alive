@@ -50,7 +50,6 @@ class Lagrangian3DArray(LagrangianArray):
                 'in the ocean column',
                                'default': 0.})])
 
-
 class OceanDrift(OpenDriftSimulation):
     """Open source buoyant particle trajectory model based on OpenDrift.
 
@@ -66,7 +65,6 @@ class OceanDrift(OpenDriftSimulation):
     """
 
     ElementType = Lagrangian3DArray
-
     required_variables = {
         'x_sea_water_velocity': {'fallback': 0},
         'y_sea_water_velocity': {'fallback': 0},
@@ -177,6 +175,19 @@ class OceanDrift(OpenDriftSimulation):
             'seed:seafloor': {'type': 'bool', 'default': False,
                 'description': 'Elements are seeded at seafloor, and seeding depth (z) is neglected.',
                 'level': CONFIG_LEVEL_ESSENTIAL},
+            'general:premature_deactivation': {'type': 'enum', 'default': None, 'enum': [None, 'temperature_minmax', 'salinity_minmax', 'exposure'],
+                'description': 'Deactivation function', 
+                'level': CONFIG_LEVEL_ADVANCED},
+            'general:deactivation_min': {'type': 'float', 'default': -999.0, 'min': -999, 'max': 999, 'units': 'None',
+                'description':  'Min thresholds for the deactivation function.',
+                'level': CONFIG_LEVEL_ADVANCED},
+            'general:deactivation_max': {'type': 'float', 'default': 999.0, 'min': -999, 'max': 999, 'units': 'None',
+                'description':  'Max thresholds for the deactivation function.',
+                'level': CONFIG_LEVEL_ADVANCED},
+            'general:deactivation_exposure': {'type': 'enum', 'default': 'simple_minmax_exposure', 
+                'enum': ['simple_minmax_exposure', 'randomly_consumed'],
+                'description': 'Exposure functions for premature_deactivation.',
+                'level': CONFIG_LEVEL_ADVANCED}
             })
 
         self._set_config_default('drift:max_speed', 2)
