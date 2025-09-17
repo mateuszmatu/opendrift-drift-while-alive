@@ -1726,7 +1726,7 @@ class OpenDriftSimulation(PhysicsMethods, Timeable, Configurable):
 
                 self.elements.health[health_indices == np.True_] -= 50
             
-            if self.get_config('general:deactivation_exposure') is 'randomly_consumed':
+            elif self.get_config('general:deactivation_exposure') is 'randomly_consumed':
                 self.elements.health -= np.random.rand(len(self.elements.health)) * 10
 
             indices = [el <= 0 for el in self.elements.health]
